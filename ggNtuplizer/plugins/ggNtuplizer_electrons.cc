@@ -4,11 +4,38 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 #include "ggAnalysis/ggNtuplizer/interface/ggNtuplizer.h"
 
 using namespace std;
 using namespace reco;
+
+namespace{
+  const reco::GenParticle* matchGenEle(const float eleEta,const float elePhi,
+				       edm::Handle<reco::GenParticleCollection> genPartsHandle,
+				       const float maxDR=0.2
+				       )
+  {
+    if(!genPartsHandle.isValid()) return nullptr;
+				    
+    float bestDR2 = maxDR*maxDR;
+    const reco::GenParticle* bestMatch = nullptr;
+    
+    for(auto& genPart : *genPartsHandle){
+      if(std::abs(genPart.pdgId())==11 && genPart.statusFlags().isLastCopyBeforeFSR()){
+	float dR2 = reco::deltaR2(genPart.eta(),genPart.phi(),eleEta,elePhi);
+	if(dR2<bestDR2){
+	  bestDR2 = dR2;
+	  bestMatch = &genPart;
+	}
+      }
+    }
+    return bestMatch;
+  }
+}
+  
+
 
 // (local) variables associated with tree branches
 Int_t          nEle_;
@@ -102,6 +129,14 @@ vector<float> gsfPt_;
 vector<float> gsfEta_;
 vector<float> gsfPhi_;
 
+vector<float> eleGenEn_;
+vector<float> eleGenPt_;
+vector<float> eleGenEta_;
+vector<float> eleGenPhi_;
+vector<float> eleGenZ_;
+vector<vector<int> > eleIDbits_;
+
+
 void ggNtuplizer::branchesElectrons(TTree* tree) {
 
   tree->Branch("nEle",                    &nEle_);
@@ -194,7 +229,13 @@ void ggNtuplizer::branchesElectrons(TTree* tree) {
     tree->Branch("gsfEta",                    &gsfEta_);
     tree->Branch("gsfPhi",                    &gsfPhi_);
   }
-  
+  tree->Branch("eleGenEn",                    &eleGenEn_);
+  tree->Branch("eleGenPt",                    &eleGenPt_);
+  tree->Branch("eleGenEta",                   &eleGenEta_);
+  tree->Branch("eleGenPhi",                   &eleGenPhi_);
+  tree->Branch("eleGenZ",                     &eleGenZ_);
+  tree->Branch("eleIDbits",                   &eleIDbits_);
+
 }
 
 void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, math::XYZPoint &pv) {
@@ -282,7 +323,12 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
   eleResol_rho_dn_            .clear();
   eleResol_phi_up_            .clear();
   eleResol_phi_dn_            .clear();
-
+  eleGenEn_                   .clear();
+  eleGenPt_                   .clear();
+  eleGenEta_                  .clear();
+  eleGenPhi_                  .clear();
+  eleGenZ_                    .clear();
+  eleIDbits_                  .clear();
   nEle_ = 0;
 
   edm::Handle<edm::View<pat::Electron> > electronHandle;
@@ -452,6 +498,28 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
     
     eleIDbit_.push_back(tmpeleIDbit);
 
+    eleIDbits_.push_back({
+	iEle->userInt("cutBasedElectronID-Fall17-94X-V2-veto"),
+	  iEle->userInt("cutBasedElectronID-Fall17-94X-V2-loose"),
+	  iEle->userInt("cutBasedElectronID-Fall17-94X-V2-medium"),
+	  iEle->userInt("cutBasedElectronID-Fall17-94X-V2-tight"),
+	  iEle->userInt("heepElectronID-HEEPV70")});
+
+
+    edm::Handle<vector<reco::GenParticle> > genPartsHandle;
+    e.getByToken(genParticlesCollection_, genPartsHandle);
+
+    const reco::GenParticle* genPart = matchGenEle(iEle->eta(),iEle->phi(),genPartsHandle);
+
+    eleGenEn_.push_back(genPart ? genPart->energy() : 0.);
+    eleGenPt_.push_back(genPart ? genPart->pt() : 0.);
+    eleGenEta_.push_back(genPart ? genPart->eta() : -999.);
+    eleGenPhi_.push_back(genPart ? genPart->phi() : -999.);
+    eleGenZ_.push_back(genPart ? genPart->vz() : -999.);
+
+    
+
+
     nEle_++;
   }
 
@@ -475,3 +543,5 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
   }
   
 }
+
+
