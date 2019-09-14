@@ -1,6 +1,8 @@
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
 #include "DataFormats/EcalDetId/interface/ESDetId.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h" 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
@@ -31,8 +33,62 @@ namespace{
 	}
       }
     }
+    if(!bestMatch){
+      for(auto& genPart : *genPartsHandle){
+	if(std::abs(genPart.pdgId())==11 && genPart.isPromptFinalState()){
+	  float dR2 = reco::deltaR2(genPart.eta(),genPart.phi(),eleEta,elePhi);
+	  if(dR2<bestDR2){
+	    bestDR2 = dR2;
+	    bestMatch = &genPart;
+	  }
+	}
+      }
+    }
+
+    //now see if we can match to a tau
+    if(!bestMatch){
+      for(auto& genPart : *genPartsHandle){
+	if(std::abs(genPart.pdgId())==11 && genPart.isDirectPromptTauDecayProductFinalState()){
+	  float dR2 = reco::deltaR2(genPart.eta(),genPart.phi(),eleEta,elePhi);
+	  if(dR2<bestDR2){
+	    bestDR2 = dR2;
+	    bestMatch = &genPart;
+	  }
+	}
+      }
+    }
     return bestMatch;
   }
+  int regionCode(float eta){
+    if(std::abs(eta)<1.479){
+      if(std::abs(eta)<1.4442) return 0;
+      else return 10;
+    }else{
+      if(std::abs(eta)>1.566 && std::abs(eta)<2.5) return 1;
+      else return 11;
+    }
+  }
+  
+  int getIEtaOrX(DetId id){
+    if(id.subdetId()==EcalBarrel){
+      EBDetId ebId(id);
+      return ebId.ieta();
+    }else if(id.subdetId()==EcalEndcap){
+      EEDetId eeId(id);
+      return eeId.ix();
+    }else return 0;
+  }
+
+  int getIPhiOrY(DetId id){
+    if(id.subdetId()==EcalBarrel){
+      EBDetId ebId(id);
+      return ebId.iphi();
+    }else if(id.subdetId()==EcalEndcap){
+      EEDetId eeId(id);
+      return eeId.iy();
+    }else return 0;
+  }
+
 }
   
 
@@ -134,8 +190,20 @@ vector<float> eleGenPt_;
 vector<float> eleGenEta_;
 vector<float> eleGenPhi_;
 vector<float> eleGenZ_;
-vector<vector<int> > eleIDbits_;
+vector<int> eleGenFromTau_;
 
+vector<vector<int> > eleIDbits_;
+vector<float> eleGsfTrkPInn_;
+vector<float> eleGsfTrkPOut_;
+vector<float> eleGsfTrkZ_;
+vector<float> eleGsfTrkZ0_;
+vector<float> eleSeedRawEn_;
+vector<float> eleSeedCorrEn_;
+vector<float> eleCalibEcalEn_;
+vector<int> eleRegion_;
+vector<int> eleIEtaOrX_;
+vector<int> eleIPhiOrY_;
+vector<int> eleSubDet_;
 
 void ggNtuplizer::branchesElectrons(TTree* tree) {
 
@@ -234,8 +302,19 @@ void ggNtuplizer::branchesElectrons(TTree* tree) {
   tree->Branch("eleGenEta",                   &eleGenEta_);
   tree->Branch("eleGenPhi",                   &eleGenPhi_);
   tree->Branch("eleGenZ",                     &eleGenZ_);
+  tree->Branch("eleGenFromTau",               &eleGenFromTau_);
   tree->Branch("eleIDbits",                   &eleIDbits_);
-
+  tree->Branch("eleGsfTrkPInn",               &eleGsfTrkPInn_);
+  tree->Branch("eleGsfTrkPOut",               &eleGsfTrkPOut_);
+  tree->Branch("eleGsfTrkZ",                  &eleGsfTrkZ_);
+  tree->Branch("eleGsfTrkZ0",                 &eleGsfTrkZ0_);
+  tree->Branch("eleSeedRawEn",                &eleSeedRawEn_);
+  tree->Branch("eleSeedCorrEn",               &eleSeedCorrEn_);
+  tree->Branch("eleCalibEcalEn",              &eleCalibEcalEn_); 
+  tree->Branch("eleRegion",                   &eleRegion_);
+  tree->Branch("eleIEtaOrX",                  &eleIEtaOrX_);
+  tree->Branch("eleIPhiOrY",                  &eleIPhiOrY_);
+  tree->Branch("eleSubDet",                   &eleSubDet_);
 }
 
 void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, math::XYZPoint &pv) {
@@ -328,7 +407,20 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
   eleGenEta_                  .clear();
   eleGenPhi_                  .clear();
   eleGenZ_                    .clear();
+  eleGenFromTau_              .clear();
   eleIDbits_                  .clear();
+  eleGsfTrkPInn_              .clear();
+  eleGsfTrkPOut_              .clear();
+  eleGsfTrkZ_                 .clear();
+  eleGsfTrkZ0_                .clear();
+  eleSeedRawEn_               .clear();
+  eleSeedCorrEn_              .clear();
+  eleCalibEcalEn_             .clear();
+  eleRegion_                  .clear();
+  eleIEtaOrX_                 .clear();
+  eleIPhiOrY_                 .clear();
+  eleSubDet_                  .clear();
+
   nEle_ = 0;
 
   edm::Handle<edm::View<pat::Electron> > electronHandle;
@@ -348,12 +440,21 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
   EcalClusterLazyTools       lazyTool    (e, es, ebReducedRecHitCollection_, eeReducedRecHitCollection_, esReducedRecHitCollection_);
   noZS::EcalClusterLazyTools lazyToolnoZS(e, es, ebReducedRecHitCollection_, eeReducedRecHitCollection_, esReducedRecHitCollection_);
 
+  edm::Handle<vector<reco::GenParticle> > genPartsHandle;
+  e.getByToken(genParticlesCollection_, genPartsHandle);
+  
+  edm::Handle<reco::BeamSpot > beamSpotHandle;
+  e.getByToken(beamSpotLabel_, beamSpotHandle);
+  
+  
   for (edm::View<pat::Electron>::const_iterator iEle = electronHandle->begin(); iEle != electronHandle->end(); ++iEle) {
+
+    if(iEle->et()<minEleEt_) continue;
 
     eleCharge_          .push_back(iEle->charge());
     eleChargeConsistent_.push_back((Int_t)iEle->isGsfCtfScPixChargeConsistent());
     eleEn_              .push_back(iEle->energy());
-    eleCalibEn_         .push_back(iEle->userFloat("ecalEnergyPostCorr"));
+    eleCalibEn_         .push_back(iEle->userFloat("ecalTrkEnergyPostCorr"));
     eleD0_              .push_back(iEle->gsfTrack()->dxy(pv));
     eleDz_              .push_back(iEle->gsfTrack()->dz(pv));
     eleSIP_             .push_back(fabs(iEle->dB(pat::Electron::PV3D))/iEle->edB(pat::Electron::PV3D));
@@ -506,8 +607,6 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
 	  iEle->userInt("heepElectronID-HEEPV70")});
 
 
-    edm::Handle<vector<reco::GenParticle> > genPartsHandle;
-    e.getByToken(genParticlesCollection_, genPartsHandle);
 
     const reco::GenParticle* genPart = matchGenEle(iEle->eta(),iEle->phi(),genPartsHandle);
 
@@ -516,9 +615,20 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
     eleGenEta_.push_back(genPart ? genPart->eta() : -999.);
     eleGenPhi_.push_back(genPart ? genPart->phi() : -999.);
     eleGenZ_.push_back(genPart ? genPart->vz() : -999.);
-
+    eleGenFromTau_.push_back(genPart ? genPart->isDirectPromptTauDecayProductFinalState() : 0 );
+  
+    eleGsfTrkPInn_.push_back(iEle->trackMomentumAtVtx().r());
+    eleGsfTrkPOut_.push_back(iEle->trackMomentumOut().r());
+    eleGsfTrkZ_.push_back(iEle->gsfTrack()->vz());
+    eleGsfTrkZ0_.push_back(iEle->gsfTrack()->dz(beamSpotHandle->position()));
     
-
+    eleSeedRawEn_.push_back(iEle->superCluster()->seed()->energy());
+    eleSeedCorrEn_.push_back(iEle->superCluster()->seed()->correctedEnergy());
+    eleCalibEcalEn_.push_back(iEle->userFloat("ecalEnergyPostCorr"));
+    eleRegion_.push_back(regionCode(iEle->superCluster()->eta()));
+    eleIEtaOrX_.push_back(getIEtaOrX(iEle->superCluster()->seed()->seed()));
+    eleIPhiOrY_.push_back(getIPhiOrY(iEle->superCluster()->seed()->seed()));
+    eleSubDet_.push_back(iEle->superCluster()->seed()->seed().subdetId()-1);//barrel is zero to compress better
 
     nEle_++;
   }

@@ -226,6 +226,7 @@ void ggNtuplizer::fillPhotons(const edm::Event& e, const edm::EventSetup& es) {
   noZS::EcalClusterLazyTools lazyToolnoZS(e, es, ebReducedRecHitCollection_, eeReducedRecHitCollection_, esReducedRecHitCollection_);
 
   for (edm::View<pat::Photon>::const_iterator iPho = photonHandle->begin(); iPho != photonHandle->end(); ++iPho) {
+    if(iPho->et()<minPhoEt_) continue;
 
     phoE_             .push_back(iPho->energy());
     phoCalibE_        .push_back(iPho->userFloat("ecalEnergyPostCorr"));

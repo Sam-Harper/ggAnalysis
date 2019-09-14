@@ -15,12 +15,14 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '102X_dataRun2_v11', '') #2018A
 
 #process.Tracer = cms.Service("Tracer")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-        'file:/data4/cmkuo/testfiles/DoubleMuon_Run2018C_17Sep2018.root'
+#        'file:/data4/cmkuo/testfiles/DoubleMuon_Run2018C_17Sep2018.root'
+#        'file:/opt/ppd/month/harper/mcFiles/DYToEE_M-50_NNPDF31_TuneCP5_13TeV-powheg-pythia8_102X_upgrade2018_realistic_v12-v1_MINIAODSIM_D3DB938B-D196-3740-A9D3-CA4483BFE545.root',
+                            'file:/opt/ppd/month/harper/dataFiles/EGamma_Run2018D_MINIAOD_322252_CEA0CEC1-E9B3-E811-921F-FA163E9182E7.root',
         #'file:/data4/cmkuo/testfiles/DoubleMuon_Run2018D_PR.root'
         )
                             )
@@ -77,11 +79,11 @@ runMetCorAndUncFromMiniAOD (
 process.load("ggAnalysis.ggNtuplizer.ggNtuplizer_miniAOD_cfi")
 process.ggNtuplizer.year=cms.int32(2017)
 process.ggNtuplizer.doGenParticles=cms.bool(False)
-process.ggNtuplizer.dumpPFPhotons=cms.bool(True)
+process.ggNtuplizer.dumpPFPhotons=cms.bool(False)
 process.ggNtuplizer.dumpHFElectrons=cms.bool(False)
-process.ggNtuplizer.dumpJets=cms.bool(True)
+process.ggNtuplizer.dumpJets=cms.bool(False)
 process.ggNtuplizer.dumpAK8Jets=cms.bool(False)
-process.ggNtuplizer.dumpSoftDrop= cms.bool(True)
+process.ggNtuplizer.dumpSoftDrop= cms.bool(False)
 process.ggNtuplizer.dumpTaus=cms.bool(False)
 process.ggNtuplizer.ak4JetSrc=cms.InputTag("slimmedJetsJEC")
 process.ggNtuplizer.pfMETLabel=cms.InputTag("slimmedMETsModifiedMET")
@@ -94,7 +96,14 @@ process.cleanedMu = cms.EDProducer("PATMuonCleanerBySegments",
                                    passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
                                    fractionOfSharedSegments = cms.double(0.499))
 
+import HLTrigger.HLTfilters.hltHighLevel_cfi
+process.skimHLTFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
+process.skimHLTFilter.throw=cms.bool(False)
+#process.skimHLTFilter.HLTPaths = cms.vstring("HLT_DoubleEle33*","HLT_DoubleEle25*","HLT_DoublePhoton60_v*","HLT_DoublePhoton70_v*","HLT_DoublePhoton85_v*","HLT_Ele23_Ele12_CaloIdL_TrackIdL*")
+process.skimHLTFilter.HLTPaths = cms.vstring("HLT_Ele23_Ele12_CaloIdL_TrackIdL*")
+
 process.p = cms.Path(
+    process.skimHLTFilter *
     process.fullPatMetSequenceModifiedMET *
     process.egammaPostRecoSeq *
     process.cleanedMu *

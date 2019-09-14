@@ -5,16 +5,16 @@ from HiggsAnalysis.HiggsTo2photons.hggPhotonIDCuts_cfi import *
 
 ggNtuplizer = cms.EDAnalyzer("ggNtuplizer",
                              hggPhotonIDConfiguration = hggPhotonIDCuts,
-                             doGenParticles       = cms.bool(True),
+                             doGenParticles       = cms.bool(False),
                              runOnParticleGun     = cms.bool(False),
                              runOnSherpa          = cms.bool(False),
                              runL1ECALPrefire     = cms.bool(False),
-                             dumpPFPhotons        = cms.bool(True), 
+                             dumpPFPhotons        = cms.bool(False), 
                              dumpJets             = cms.bool(False),
                              dumpAK8Jets          = cms.bool(False),
                              dumpTaus             = cms.bool(False),
                              dumpPDFSystWeight    = cms.bool(False),
-                             dumpHFElectrons      = cms.bool(True),
+                             dumpHFElectrons      = cms.bool(False),
                              development          = cms.bool(False),
                              addFilterInfoMINIAOD = cms.bool(False),
                              doNoHFMET            = cms.bool(False),
@@ -23,6 +23,9 @@ ggNtuplizer = cms.EDAnalyzer("ggNtuplizer",
 
                              trgFilterDeltaPtCut  = cms.double(0.5),
                              trgFilterDeltaRCut   = cms.double(0.3),
+
+                             minEleEt             = cms.double(20),
+                             minPhoEt             = cms.double(20),
 
                              triggerEvent         = cms.InputTag("slimmedPatTrigger", "", ""),
                              triggerResults       = cms.InputTag("TriggerResults", "", "HLT"),
@@ -66,5 +69,6 @@ ggNtuplizer = cms.EDAnalyzer("ggNtuplizer",
                              packedPFCands             = cms.InputTag("packedPFCandidates"),
                              elePFClusEcalIsoProducer  = cms.InputTag("electronEcalPFClusterIsolationProducer"),
                              elePFClusHcalIsoProducer  = cms.InputTag("electronHcalPFClusterIsolationProducer"),
-                             ecalBadCalibReducedMINIAODFilter = cms.InputTag("ecalBadCalibReducedMINIAODFilter")
+                             ecalBadCalibReducedMINIAODFilter = cms.InputTag("ecalBadCalibReducedMINIAODFilter"),
+                             beamSpotLabel             = cms.InputTag("offlineBeamSpot")
 )

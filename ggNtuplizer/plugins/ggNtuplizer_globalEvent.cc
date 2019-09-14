@@ -417,7 +417,7 @@ void ggNtuplizer::fillGlobalEvent(const edm::Event& e, const edm::EventSetup& es
     // indicates prescaling and whether trigger was fired or not
     ULong64_t isPrescaled = (hltCfg.prescaleValue(prescaleSet, name)!=1) ? 1 : 0;
     ULong64_t isFired     = (trgResultsHandle->accept(i)) ? 1 : 0;
-    ULong64_t isrejectedByHLTPS = (hltCfg.moduleType(hltCfg.moduleLabel(i,trgResultsHandle->index(i)))=="HLTPrescaler") ? 1: 0;
+    ULong64_t isrejectedByHLTPS = 0;//this is super slow so commented out (hltCfg.moduleType(hltCfg.moduleLabel(i,trgResultsHandle->index(i)))=="HLTPrescaler") ? 1: 0;
 
     if (bitEleMuX >= 0) {
       HLTEleMuX_            |= (isFired << bitEleMuX);

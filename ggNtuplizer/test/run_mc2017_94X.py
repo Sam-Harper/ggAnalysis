@@ -1,3 +1,5 @@
+isCrabJob=False #script seds this if its a crab job
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('ggKit')
@@ -13,12 +15,13 @@ from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '94X_mc2017_realistic_v17')
 
 #process.Tracer = cms.Service("Tracer")
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-        'file:/data4/cmkuo/testfiles/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIIFall17MiniAODv2.root'
+                                'file:/opt/ppd/month/harper/mcFiles/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2_MINIAODV2_5A66F50D-45DF-E811-8F55-D4AE52901D66.root'
+#'file:/data4/cmkuo/testfiles/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIIFall17MiniAODv2.root'
         ))
 
 #process.load("PhysicsTools.PatAlgos.patSequences_cff")
@@ -48,6 +51,11 @@ setupEgammaPostRecoSeq(process,
                        )
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string('ggtree_mc.root'))
+
+#if 1, its a crab job...
+if isCrabJob:
+    print "using crab specified filename"
+    process.TFileService
 
 ### update JEC
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
@@ -81,17 +89,19 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 
 process.load("ggAnalysis.ggNtuplizer.ggNtuplizer_miniAOD_cfi")
 process.ggNtuplizer.year=cms.int32(2017)
-process.ggNtuplizer.doGenParticles=cms.bool(True)
+process.ggNtuplizer.doGenParticles=cms.bool(False)
 process.ggNtuplizer.runL1ECALPrefire=cms.bool(True)
-process.ggNtuplizer.dumpPFPhotons=cms.bool(True)
+process.ggNtuplizer.dumpPFPhotons=cms.bool(False)
 process.ggNtuplizer.dumpHFElectrons=cms.bool(False)
-process.ggNtuplizer.dumpJets=cms.bool(True)
+process.ggNtuplizer.dumpJets=cms.bool(False)
 process.ggNtuplizer.dumpAK8Jets=cms.bool(False)
-process.ggNtuplizer.dumpSoftDrop= cms.bool(True)
+process.ggNtuplizer.dumpSoftDrop= cms.bool(False)
 process.ggNtuplizer.dumpTaus=cms.bool(False)
 process.ggNtuplizer.triggerEvent=cms.InputTag("slimmedPatTrigger", "", "PAT")
 process.ggNtuplizer.ak4JetSrc=cms.InputTag("slimmedJetsJEC")
 process.ggNtuplizer.pfMETLabel=cms.InputTag("slimmedMETsModifiedMET")
+process.ggNtuplizer.minEleEt = 0.
+process.ggNtuplizer.minPhoEt = 0.
 
 process.cleanedMu = cms.EDProducer("PATMuonCleanerBySegments",
                                    src = cms.InputTag("slimmedMuons"),

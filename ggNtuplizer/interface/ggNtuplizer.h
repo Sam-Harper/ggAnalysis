@@ -115,6 +115,9 @@ class ggNtuplizer : public edm::EDAnalyzer {
   double trgFilterDeltaPtCut_;
   double trgFilterDeltaRCut_;
 
+  float minEleEt_;
+  float minPhoEt_;
+
   edm::EDGetTokenT<reco::VertexCollection>         vtxLabel_;
   edm::EDGetTokenT<reco::VertexCollection>         vtxBSLabel_;
   edm::EDGetTokenT<double>                         rhoLabel_;
@@ -147,6 +150,7 @@ class ggNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<edm::View<pat::Jet> >           jetsAK8Label_;
   edm::EDGetTokenT<reco::JetTagCollection>         boostedDoubleSVLabel_;
   edm::EDGetTokenT<pat::PackedCandidateCollection> pckPFCandidateCollection_;
+  edm::EDGetTokenT<reco::BeamSpot>                 beamSpotLabel_;
 
   // for MET filters
   edm::EDGetTokenT<bool> ecalBadCalibFilterUpdate_;

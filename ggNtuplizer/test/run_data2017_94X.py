@@ -1,3 +1,5 @@
+isCrabJob=False #script seds this if its a crab job
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('ggKit')
@@ -19,7 +21,8 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-        'file:/data4/cmkuo/testfiles/DoubleEG_Run2017E_31Mar2018.root'
+#        'file:/data4/cmkuo/testfiles/DoubleEG_Run2017E_31Mar2018.root'
+                                'file:/opt/ppd/month/harper/dataFiles/DoubleEG_Run2017F_MINIAOD_94X_305064_3E907453-F3E1-E711-BFB4-0CC47AB0B704.root',
         )
                             )
 
@@ -50,6 +53,11 @@ runOnData( process,  names=['Photons', 'Electrons','Muons','Taus','Jets'], outpu
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string('ggtree_data.root'))
 
+#if 1, its a crab job...
+if isCrabJob:
+    print "using crab specified filename"
+    process.TFileService
+
 ### update JEC
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 process.jetCorrFactors = process.updatedPatJetCorrFactors.clone(
@@ -75,11 +83,11 @@ runMetCorAndUncFromMiniAOD (
 process.load("ggAnalysis.ggNtuplizer.ggNtuplizer_miniAOD_cfi")
 process.ggNtuplizer.year=cms.int32(2017)
 process.ggNtuplizer.doGenParticles=cms.bool(False)
-process.ggNtuplizer.dumpPFPhotons=cms.bool(True)
+process.ggNtuplizer.dumpPFPhotons=cms.bool(False)
 process.ggNtuplizer.dumpHFElectrons=cms.bool(False)
-process.ggNtuplizer.dumpJets=cms.bool(True)
+process.ggNtuplizer.dumpJets=cms.bool(False)
 process.ggNtuplizer.dumpAK8Jets=cms.bool(False)
-process.ggNtuplizer.dumpSoftDrop= cms.bool(True)
+process.ggNtuplizer.dumpSoftDrop= cms.bool(False)
 process.ggNtuplizer.dumpTaus=cms.bool(False)
 process.ggNtuplizer.ak4JetSrc=cms.InputTag("slimmedJetsJEC")
 process.ggNtuplizer.pfMETLabel=cms.InputTag("slimmedMETsModifiedMET")
@@ -92,7 +100,17 @@ process.cleanedMu = cms.EDProducer("PATMuonCleanerBySegments",
                                    passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
                                    fractionOfSharedSegments = cms.double(0.499))
 
+
+# Additional output definition
+import HLTrigger.HLTfilters.hltHighLevel_cfi
+process.skimHLTFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
+process.skimHLTFilter.throw=cms.bool(False)
+#process.skimHLTFilter.HLTPaths = cms.vstring("HLT_DoubleEle33*","HLT_DoubleEle25*","HLT_DoublePhoton60_v*","HLT_DoublePhoton70_v*","HLT_DoublePhoton85_v*","HLT_Ele23_Ele12_CaloIdL_TrackIdL*")
+process.skimHLTFilter.HLTPaths = cms.vstring("HLT_Ele23_Ele12_CaloIdL_TrackIdL*")
+
+
 process.p = cms.Path(
+    process.skimHLTFilter *
     process.fullPatMetSequenceModifiedMET *
     process.egammaPostRecoSeq *
     process.cleanedMu *

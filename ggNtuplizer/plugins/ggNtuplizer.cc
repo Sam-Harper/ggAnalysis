@@ -32,6 +32,9 @@ ggNtuplizer::ggNtuplizer(const edm::ParameterSet& ps) :
   trgFilterDeltaPtCut_       = ps.getParameter<double>("trgFilterDeltaPtCut");
   trgFilterDeltaRCut_        = ps.getParameter<double>("trgFilterDeltaRCut");
 
+  minEleEt_                  = ps.getParameter<double>("minEleEt");
+  minPhoEt_                  = ps.getParameter<double>("minPhoEt");
+
   vtxLabel_                  = consumes<reco::VertexCollection>        (ps.getParameter<InputTag>("VtxLabel"));
   vtxBSLabel_                = consumes<reco::VertexCollection>        (ps.getParameter<InputTag>("VtxBSLabel"));
   rhoLabel_                  = consumes<double>                        (ps.getParameter<InputTag>("rhoLabel"));
@@ -73,9 +76,12 @@ ggNtuplizer::ggNtuplizer(const edm::ParameterSet& ps) :
 
   //pfLooseId_                 = ps.getParameter<ParameterSet>("pfLooseId");
 
+  beamSpotLabel_              = consumes<reco::BeamSpot>                (ps.getParameter<InputTag>("beamSpotLabel"));
+
   prefweight_token_          = consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProb"));
   prefweightup_token_        = consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProbUp"));
   prefweightdown_token_      = consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProbDown"));
+
 
   cicPhotonId_ = new CiCPhotonID(ps);
 
@@ -85,8 +91,8 @@ ggNtuplizer::ggNtuplizer(const edm::ParameterSet& ps) :
 
   branchesGlobalEvent(tree_);
 
+  branchesGenInfo(tree_, fs);
   if (doGenParticles_) {
-    branchesGenInfo(tree_, fs);
     branchesGenPart(tree_);
   }
   

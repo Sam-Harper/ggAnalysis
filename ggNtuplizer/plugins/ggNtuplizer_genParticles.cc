@@ -201,8 +201,7 @@ void ggNtuplizer::fillGenInfo(const edm::Event& e) {
   edm::Handle<GenEventInfoProduct> genEventInfoHandle;
   e.getByToken(generatorLabel_, genEventInfoHandle);
 
-  if (genEventInfoHandle.isValid()) {
-
+  if (genEventInfoHandle.isValid()) { 
     if (genEventInfoHandle->pdf()) {
       pdf_.push_back(genEventInfoHandle->pdf()->id.first);    // PDG ID of incoming parton #1
       pdf_.push_back(genEventInfoHandle->pdf()->id.second);   // PDG ID of incoming parton #2
@@ -212,7 +211,6 @@ void ggNtuplizer::fillGenInfo(const edm::Event& e) {
       pdf_.push_back(genEventInfoHandle->pdf()->xPDF.second); // PDF weight for parton #2
       pdf_.push_back(genEventInfoHandle->pdf()->scalePDF);    // scale of the hard interaction
     }
-
     if (genEventInfoHandle->hasBinningValues())
       pthat_ = genEventInfoHandle->binningValues()[0];
     processID_ = genEventInfoHandle->signalProcessID();
@@ -221,6 +219,7 @@ void ggNtuplizer::fillGenInfo(const edm::Event& e) {
     else hGenWeight_->Fill(1.5);
     if (abs(genWeight_)>1) hSumGenWeight_->Fill(0.5,genWeight_/abs(genWeight_));
     else hSumGenWeight_->Fill(0.5,genWeight_);
+
   } else
     edm::LogWarning("ggNtuplizer") << "no GenEventInfoProduct in event";
   
