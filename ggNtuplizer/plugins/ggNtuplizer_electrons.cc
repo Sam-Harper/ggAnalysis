@@ -685,8 +685,8 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
     eleSigmaIEtaIEta_.push_back(iEle->sigmaIetaIeta());
     eleEcalClusIso_.push_back(iEle->ecalPFClusterIso());
     eleHcalClusIso_.push_back(iEle->hcalPFClusterIso());
-    eleEmIso_.push_back(iEle->dr03EcalRecHitSumEt());
-    eleHadIso_.push_back(iEle->dr03HcalTowerSumEt());
+    eleEmIsol_.push_back(iEle->dr03EcalRecHitSumEt());
+    eleHadIsol_.push_back(iEle->dr03HcalTowerSumEt());
     eleTrkIsoHEEP_.push_back(iEle->userFloat("heepTrkPtIso"));
     eleHoverESingleTower_.push_back(iEle->hcalOverEcalBc());
     eleE1x5Full_.push_back(iEle->full5x5_e1x5());
