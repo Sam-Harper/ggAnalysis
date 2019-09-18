@@ -205,6 +205,24 @@ vector<int> eleIEtaOrX_;
 vector<int> eleIPhiOrY_;
 vector<int> eleSubDet_;
 
+
+vector<float> eleEcalEnErr_;
+vector<float> eleEcalTrkEnErr_;
+vector<float> eleTrkMomErr_;
+vector<float> eleSeedEta_;
+vector<float> eledEtaSeedAtVtx_;
+vector<float> eleSigmaIEtaIEta_;
+vector<float> eleEcalClusIso_;
+vector<float> eleHcalClusIso_;
+vector<float> eleEmIsol_;
+vector<float> eleHadIsol_;
+vector<float> eleTrkIsoHEEP_;
+vector<float> eleHoverESingleTower_;
+vector<float> eleE1x5Full_;
+vector<float> eleE2x5MaxFull_;
+vector<float> eleE5x5Full_;
+
+
 void ggNtuplizer::branchesElectrons(TTree* tree) {
 
   tree->Branch("nEle",                    &nEle_);
@@ -315,6 +333,22 @@ void ggNtuplizer::branchesElectrons(TTree* tree) {
   tree->Branch("eleIEtaOrX",                  &eleIEtaOrX_);
   tree->Branch("eleIPhiOrY",                  &eleIPhiOrY_);
   tree->Branch("eleSubDet",                   &eleSubDet_);
+  tree->Branch("eleEcalEnErr",                &eleEcalEnErr_);
+  tree->Branch("eleTrkMomErr",                &eleTrkMomErr_);
+  tree->Branch("eleEcalTrkEnErr",         &eleEcalTrkEnErr_);
+  tree->Branch("eledEtaSeedAtVtx",            &eledEtaSeedAtVtx_);
+  tree->Branch("eleSeedEta",                  &eleSeedEta_);
+  tree->Branch("eleSigmaIEtaIEta",            &eleSigmaIEtaIEta_);
+  tree->Branch("eleEcalClusIso",              &eleEcalClusIso_);
+  tree->Branch("eleHcalClusIso",              &eleHcalClusIso_);
+  tree->Branch("eleEmIsol",                   &eleEmIsol_);
+  tree->Branch("eleHadIsol",                  &eleHadIsol_);
+  tree->Branch("eleTrkIsoHEEP",               &eleTrkIsoHEEP_);
+  tree->Branch("eleHoverESingleTower",        &eleHoverESingleTower_);
+  tree->Branch("eleE1x5Full",                 &eleE1x5Full_);
+  tree->Branch("eleE2x5MaxFull",              &eleE2x5MaxFull_);
+  tree->Branch("eleE5x5Full",                 &eleE5x5Full_);
+
 }
 
 void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, math::XYZPoint &pv) {
@@ -420,7 +454,21 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
   eleIEtaOrX_                 .clear();
   eleIPhiOrY_                 .clear();
   eleSubDet_                  .clear();
-
+  eleEcalEnErr_               .clear();
+  eleTrkMomErr_               .clear();
+  eleEcalTrkEnErr_            .clear();
+  eledEtaSeedAtVtx_           .clear();
+  eleSeedEta_                 .clear();
+  eleSigmaIEtaIEta_           .clear();
+  eleEcalClusIso_             .clear();
+  eleHcalClusIso_             .clear();
+  eleEmIsol_                  .clear();
+  eleHadIsol_                 .clear();
+  eleTrkIsoHEEP_              .clear();
+  eleHoverESingleTower_       .clear();
+  eleE1x5Full_                .clear();
+  eleE2x5MaxFull_             .clear();
+  eleE5x5Full_                .clear();
   nEle_ = 0;
 
   edm::Handle<edm::View<pat::Electron> > electronHandle;
@@ -629,7 +677,22 @@ void ggNtuplizer::fillElectrons(const edm::Event &e, const edm::EventSetup &es, 
     eleIEtaOrX_.push_back(getIEtaOrX(iEle->superCluster()->seed()->seed()));
     eleIPhiOrY_.push_back(getIPhiOrY(iEle->superCluster()->seed()->seed()));
     eleSubDet_.push_back(iEle->superCluster()->seed()->seed().subdetId()-1);//barrel is zero to compress better
-
+    eleEcalEnErr_.push_back(iEle->correctedEcalEnergyError());
+    eleTrkMomErr_.push_back(iEle->trackMomentumError());
+    eleEcalTrkEnErr_.push_back(iEle->p4Error(reco::GsfElectron::P4_COMBINATION));
+    eledEtaSeedAtVtx_.push_back(iEle->deltaEtaSeedClusterTrackAtVtx());
+    eleSeedEta_.push_back(iEle->superCluster()->seed()->eta());
+    eleSigmaIEtaIEta_.push_back(iEle->sigmaIetaIeta());
+    eleEcalClusIso_.push_back(iEle->ecalPFClusterIso());
+    eleHcalClusIso_.push_back(iEle->hcalPFClusterIso());
+    eleEmIso_.push_back(iEle->dr03EcalRecHitSumEt());
+    eleHadIso_.push_back(iEle->dr03HcalTowerSumEt());
+    eleTrkIsoHEEP_.push_back(iEle->userFloat("heepTrkPtIso"));
+    eleHoverESingleTower_.push_back(iEle->hcalOverEcalBc());
+    eleE1x5Full_.push_back(iEle->full5x5_e1x5());
+    eleE2x5MaxFull_.push_back(iEle->full5x5_e2x5Max());
+    eleE5x5Full_.push_back(iEle->full5x5_e5x5());
+    
     nEle_++;
   }
 
